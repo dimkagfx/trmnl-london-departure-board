@@ -1,11 +1,11 @@
-  <div class="flex flex-col w-full h-full p-4">
+  <div class="layout flex flex-col p-4">
     {% if data.trains.size > 0 %}
       <table class="table w-full">
         <thead>
           <tr class="border-b-4 border-black text-xl uppercase tracking-wide">
             <th class="text-left pb-2"></th>
-            <th class="text-left px-4 pb-2 w-3/5"><span class="title">Destination</span></th>
-            <th class="text-right pb-2"><span class="title">Departs</span></th>
+            <th class="text-left px-4 pb-2 w-3/5">Destination</th>
+            <th class="text-right pb-2">Departs</th>
           </tr>
         </thead>
         <tbody>
@@ -15,17 +15,20 @@
               <!-- Transport Mode Icon -->
               <td class="py-3">
                 {% if train.mode == 'Rail' %}
-                  <!-- Train Icon for National Rail -->
-                  <img class="w-10 h-10" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNOCAzLjFWNyIvPjxwYXRoIGQ9Ik0xNiAzLjFWNyIvPjxwYXRoIGQ9Ik0yIDE0aDIwIi8+PHBhdGggZD0iTTMgMTB2NGMwIDMuMyAyLjcgNiA2IDZoNmMzLjMgMCA2LTIuNyA2LTZ2LTRjMC0zLjMtMi43LTYtNi02SDljLTMuMyAwLTYgMi43LTYgNnoiLz48cGF0aCBkPSJNNiAxNHYuMDEiLz48cGF0aCBkPSJNMTggMTR2LjAxIi8+PC9zdmc+" />
+                  <!-- Train Icon for National Rail (removed explicit width/height from SVG to allow CSS to control) -->
+                  <img class="object-contain image-dither" width="20" height="20" src="https://raw.githubusercontent.com/dimkagfx/trmnl-london-departure-board/refs/heads/master/National_Rail_logo.svg" />
                 {% else %}
                   <!-- Tram/Subway Icon for TfL / DLR -->
-                  <img class="w-10 h-10" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHg9IjQiIHk9IjMiIHJ4PSIyIi8+PHBhdGggZD0iTTQgMTFoMTYiLz48cGF0aCBkPSJNMTIgM3Y4Ii8+PHBhdGggZD0iTTggMTlsLTIgMyIvPjxwYXRoIGQ9Ik0xOCAyMmwtMi0zIi8+PHBhdGggZD0iTTggMTVoLjAxIi8+PHBhdGggZD0iTTE2IDE1aC4wMSIvPjwvc3ZnPg==" />
+                  <img class="object-contain image-dither" width="20" height="20" src="https://raw.githubusercontent.com/dimkagfx/trmnl-london-departure-board/refs/heads/master/tfl_roundel.svg" />
                 {% endif %}
               </td>
 
               <!-- Destination -->
               <td class="px-4 py-3">
-                <span class="label text-3xl font-bold" data-clamp="1">{{ train.dest }}</span>
+                <span class="text-3xl font-bold" data-clamp="1">{{ train.dest }}</span>
+                {% if train.platform %}
+                  <span class="text-xl ml-2">Plat {{ train.platform }}</span>
+                {% endif %}
               </td>
 
               <!-- Time Logic -->
@@ -64,3 +67,9 @@
       </div>
     {% endif %}
   </div>
+  <div class="flex items-center justify-between px-4 py-2 border-t border-black">
+    <img class="h-6 w-auto mr-2" src="/images/plugins/trmnl--render.svg" alt="TRMNL Logo" />
+    <span class="font-bold text-lg">TfL & National Rail</span>
+    <span class="text-sm text-gray-600">Updated {{ data.last_updated }}</span>
+  </div>
+</div>

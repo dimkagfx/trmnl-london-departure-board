@@ -1,0 +1,9 @@
+name = "trmnl-london-departure-board"
+main = "worker.ts"
+compatibility_date = "2024-04-21"
+
+# You can set your variables here (or preferably as secrets via `npx wrangler secret put <NAME>`)
+# [vars]
+# TFL_STATION = "940GZZDLSIT"
+# NR_STATION = "SFA"
+# NR_DESTINATIONS = "St Pancras"
