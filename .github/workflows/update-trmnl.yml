@@ -1,0 +1,35 @@
+name: Update TRMNL Display
+
+on:
+  schedule:
+    # Runs every minute
+    - cron: '* * * * *'
+  # Allows you to manually trigger the workflow from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run aggregator script
+        env:
+          TRMNL_WEBHOOK_URL: ${{ secrets.TRMNL_WEBHOOK_URL }}
+          TFL_APP_KEY: ${{ secrets.TFL_APP_KEY }}
+          NR_TOKEN: ${{ secrets.NR_TOKEN }}
+          TFL_STATION: ${{ vars.TFL_STATION }}
+          NR_STATION: ${{ vars.NR_STATION }}
+          NR_DESTINATIONS: ${{ vars.NR_DESTINATIONS }}
+        run: python aggregator.py
