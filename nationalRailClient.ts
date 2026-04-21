@@ -33,7 +33,7 @@ export class NationalRailClient {
       if (targetDate.getTime() < ukDate.getTime() - (5 * 60 * 1000)) {
         targetDate.setDate(targetDate.getDate() + 1);
       }
-      return targetDate.getTime();
+      return Math.floor(targetDate.getTime() / 1000); // Return epoch in seconds
     } catch (e) {
       console.error("Error converting time string to epoch:", timeStr, e);
       return undefined;
@@ -76,7 +76,7 @@ export class NationalRailClient {
           railList.push({
             mode: 'Rail',
             dest: destName.replace('Highspeed', 'HS'),
-            scheduled: scheduledEpoch ?? 0, // Fallback to 0 if parsing fails
+            scheduled: scheduledEpoch ?? 0, // Fallback to 0 if parsing fails, already in seconds
             estimated: estimatedEpoch,
             platform: platform,
             is_delayed: etd !== 'On time' && etd !== 'Cancelled',

@@ -53,7 +53,7 @@ export default {
       const payload = {
         trains: combinedTrains,
         alerts: alerts,
-        last_updated: getUKTime()
+        last_updated: Math.floor(new Date().getTime() / 1000) // Epoch timestamp in seconds
       };
 
       return new Response(JSON.stringify(payload), {

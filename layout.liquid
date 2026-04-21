@@ -1,15 +1,16 @@
   <div class="layout flex flex-col p-4">
-    {% if data.trains.size > 0 %}
+    {% if trains.size > 0 %}
       <table class="table w-full">
         <thead>
           <tr class="border-b-4 border-black text-xl uppercase tracking-wide">
             <th class="text-left pb-2"></th>
             <th class="text-left px-4 pb-2 w-3/5">Destination</th>
+            <th class="text-right pb-2">Platform</th>
             <th class="text-right pb-2">Departs</th>
           </tr>
         </thead>
         <tbody>
-          {% for train in data.trains limit: 7 %}
+          {% for train in trains limit: 7 %}
             <tr class="border-b-2 border-black">
               
               <!-- Transport Mode Icon -->
@@ -26,9 +27,11 @@
               <!-- Destination -->
               <td class="px-4 py-3">
                 <span class="text-3xl font-bold" data-clamp="1">{{ train.dest }}</span>
-                {% if train.platform %}
-                  <span class="text-xl ml-2">Plat {{ train.platform }}</span>
-                {% endif %}
+              </td>
+
+              <!-- Platform -->
+              <td class="text-right py-3">
+                  <span class="text-3xl font-bold">{{ train.platform ? train.platform : '-' }}</span>
               </td>
 
               <!-- Time Logic -->
@@ -36,10 +39,9 @@
                 {% if train.is_cancelled %}
                   <span class="bg-black text-white rounded px-2 py-1 text-lg font-bold">Cancelled</span>
                 {% elsif train.is_delayed %}
-                  <span class="text-3xl font-bold">{{ train.estimated }}</span>
-                  <span class="text-lg line-through ml-2">{{ train.scheduled }}</span>
+                  <span class="text-lg line-through ml-2">{{ train.scheduled | date: "hh:mm" }} (est. {{ train.estimated | date: "%H:%M" }})</span>
                 {% else %}
-                  <span class="text-3xl font-bold">{{ train.scheduled }}</span>
+                  <span class="text-3xl font-bold">{{ train.scheduled | date: "%H:%M" }}</span>
                 {% endif %}
               </td>
               
@@ -70,6 +72,6 @@
   <div class="flex items-center justify-between px-4 py-2 border-t border-black">
     <img class="h-6 w-auto mr-2" src="/images/plugins/trmnl--render.svg" alt="TRMNL Logo" />
     <span class="font-bold text-lg">TfL & National Rail</span>
-    <span class="text-sm text-gray-600">Updated {{ data.last_updated }}</span>
+    <span class="text-sm text-gray-600">Updated {{ last_updated }}</span>
   </div>
 </div>

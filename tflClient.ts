@@ -20,7 +20,7 @@ export class TflClient {
         for (const t of arrivalsData) {
           const expectedUtc = new Date(t.expectedArrival);
           // Store epoch timestamp instead of formatted string
-          const scheduledEpoch = expectedUtc.getTime();
+          const scheduledEpoch = Math.floor(expectedUtc.getTime() / 1000); // Convert to seconds
 
           const rawDest = t.destinationName || 'Unknown';
           const cleanDest = rawDest
