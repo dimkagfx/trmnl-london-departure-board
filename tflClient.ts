@@ -3,6 +3,23 @@ import { Train, Alert } from './types';
 export class TflClient {
   private appKey: string;
   private station: string;
+  // Mapping for line abbreviations
+  private lineAbbreviations: { [key: string]: string } = {
+    'Bakerloo': 'BKL',
+    'Central': 'CEN',
+    'Circle': 'CIR',
+    'District': 'DIS',
+    'Hammersmith & City': 'H&C',
+    'Jubilee': 'JBL',
+    'Metropolitan': 'MET',
+    'Northern': 'NOR',
+    'Piccadilly': 'PIC',
+    'Victoria': 'VIC',
+    'Waterloo & City': 'W&C',
+    'DLR': 'DLR',
+    'Overground': 'OVR',
+    'Elizabeth line': 'ELZ',
+  };
 
   constructor(appKey: string, station: string) {
     this.appKey = appKey;
@@ -27,7 +44,10 @@ export class TflClient {
             .replace(' DLR Station', '')
             .replace(' Underground Station', '')
             .replace(' Rail Station', '');
-          const platform = t.platformName || null;
+          
+          // Extract only the number from the platformName, if present
+          const platformMatch = t.platformName?.match(/\d+/);
+          const platform = platformMatch ? platformMatch[0] : t.platformName;
 
           trains.push({
             mode: t.lineName || 'TfL',
@@ -44,9 +64,9 @@ export class TflClient {
     return trains;
   }
 
-  async fetchTflAlerts(): Promise<Alert[]> {
+  async fetchTflAlerts(): Promise<Record<string, string[]>> {
     const statusUrl = `https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?app_key=${this.appKey}`;
-    const alerts: Alert[] = [];
+    const groupedAlerts: Record<string, string[]> = {};
 
     const statusRes = await fetch(statusUrl, { cf: { cacheTtl: 300 } });
 
@@ -55,15 +75,18 @@ export class TflClient {
         for (const s of statusData) { // Iterate through each line status
           // Severity < 10 indicates anything worse than "Good Service"
           if (s.lineStatuses && s.lineStatuses[0].statusSeverity < 10) { // Check for actual status
-            alerts.push({ // Add to alerts array
-              line: s.name,
-              status: s.lineStatuses[0].statusSeverityDescription
-            });
+            const lineName = s.name;
+            const abbreviatedLine = this.lineAbbreviations[lineName] || lineName; // Get abbreviation or use full name
+            const statusDescription = s.lineStatuses[0].statusSeverityDescription;
+            if (!groupedAlerts[statusDescription]) {
+              groupedAlerts[statusDescription] = [];
+            }
+            groupedAlerts[statusDescription].push(abbreviatedLine);
           }
         }
       } else {
         console.error(`Failed to fetch TfL status: ${statusRes.status} ${statusRes.statusText}`);
       }
-    return alerts;
+    return groupedAlerts;
   }
 }

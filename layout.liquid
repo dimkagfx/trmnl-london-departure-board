@@ -1,6 +1,6 @@
-  <div class="layout flex flex-col p-4">
+  <div class="layout flex flex-col px-4 pb-4">
     {% if trains.size > 0 %}
-      <table class="table w-full">
+      <table class="table w-full mt-4">
         <thead>
           <tr class="border-b-4 border-black text-xl uppercase tracking-wide">
             <th class="text-left pb-2"></th>
@@ -9,8 +9,8 @@
             <th class="text-right pb-2">Departs</th>
           </tr>
         </thead>
-        <tbody>
-          {% for train in trains limit: 7 %}
+        <tbody class="divide-y divide-black">
+          {% for train in trains limit: 8 %}
             <tr class="border-b-2 border-black">
               
               <!-- Transport Mode Icon -->
@@ -68,10 +68,24 @@
         <div class="text-2xl font-bold mt-6">Please enjoy this Samoyed.</div>
       </div>
     {% endif %}
-  </div>
-  <div class="flex items-center justify-between px-4 py-2 border-t border-black">
-    <img class="h-6 w-auto mr-2" src="/images/plugins/trmnl--render.svg" alt="TRMNL Logo" />
-    <span class="font-bold text-lg">TfL & National Rail</span>
-    <span class="text-sm text-gray-600">Updated {{ last_updated }}</span>
+
+    {% if alerts.size > 0 %}
+      <div class="mt-4 pt-2 border-t border-black">
+        <span class="font-bold text-lg">Service Alerts:</span>
+        <div class="text-sm">
+          {% for status in alerts %} {# Iterate over the grouped alerts object #}
+            <div class="flex">
+              <span class="font-bold mr-1">{{ status[0] }}:</span> {# status[0] is the key (status description) #}
+              <span>{{ status[1] | join: ',' }}</span> {# status[1] is the value (array of lines) #}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="flex items-center justify-between px-4 py-2 border-t border-black -mx-4 mt-4">
+      <span class="font-bold text-lg">TfL & National Rail</span>
+      <span class="text-sm text-gray-600">Updated {{ last_updated | date: "%H:%M" }}</span>
+    </div>
   </div>
 </div>
