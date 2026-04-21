@@ -1,20 +1,21 @@
-  <div class="layout flex flex-col px-4 pb-4">
+  <div class="layout flex flex--col">
+    <div class="w--full">
     {% if trains.size > 0 %}
-      <table class="table w-full mt-4">
+      <table class="table table--small">
         <thead>
-          <tr class="border-b-4 border-black text-xl uppercase tracking-wide">
-            <th class="text-left pb-2"></th>
-            <th class="text-left px-4 pb-2 w-3/5">Destination</th>
-            <th class="text-right pb-2">Platform</th>
-            <th class="text-right pb-2">Departs</th>
+          <tr>
+            <th></th>
+            <th>Destination</th>
+            <th>Platform</th>
+            <th>Departs</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-black">
           {% for train in trains limit: 8 %}
-            <tr class="border-b-2 border-black">
+            <tr>
               
               <!-- Transport Mode Icon -->
-              <td class="py-3">
+              <td>
                 {% if train.mode == 'Rail' %}
                   <!-- Train Icon for National Rail (removed explicit width/height from SVG to allow CSS to control) -->
                   <img class="object-contain image-dither" width="20" height="20" src="https://raw.githubusercontent.com/dimkagfx/trmnl-london-departure-board/refs/heads/master/National_Rail_logo.svg" />
@@ -25,21 +26,21 @@
               </td>
 
               <!-- Destination -->
-              <td class="px-4 py-3">
+              <td>
                 <span class="text-3xl font-bold" data-clamp="1">{{ train.dest }}</span>
               </td>
 
               <!-- Platform -->
-              <td class="text-right py-3">
+              <td>
                   <span class="text-3xl font-bold">{{ train.platform ? train.platform : '-' }}</span>
               </td>
 
               <!-- Time Logic -->
-              <td class="text-right py-3">
+              <td>
                 {% if train.is_cancelled %}
                   <span class="bg-black text-white rounded px-2 py-1 text-lg font-bold">Cancelled</span>
                 {% elsif train.is_delayed %}
-                  <span class="text-lg line-through ml-2">{{ train.scheduled | date: "hh:mm" }} (est. {{ train.estimated | date: "%H:%M" }})</span>
+                  <span class="text-lg line-through ml-2">{{ train.scheduled | date: "%H:%M" }} (est. {{ train.estimated | date: "%H:%M" }})</span>
                 {% else %}
                   <span class="text-3xl font-bold">{{ train.scheduled | date: "%H:%M" }}</span>
                 {% endif %}
@@ -50,42 +51,28 @@
         </tbody>
       </table>
     {% else %}
-      <!-- Empty State with Samoyed -->
-      <div class="flex flex-col items-center justify-center h-full grow pb-8 mt-12">
-        <div class="text-4xl font-bold mb-6">No departures right now.</div>
-        <pre class="font-mono text-3xl leading-tight font-bold">
-            ,-~~~-,
-        .-'"       "'-.
-      /               \
-      |   ^         ^   |
-      |  (O)       (O)  |
-      |        A        |
-      |      \___/      |
-      \               /
-        '-._       _.-'
-            `"---"`
-        </pre>
-        <div class="text-2xl font-bold mt-6">Please enjoy this Samoyed.</div>
-      </div>
     {% endif %}
+    </div>
 
     {% if alerts.size > 0 %}
-      <div class="mt-4 pt-2 border-t border-black">
-        <span class="font-bold text-lg">Service Alerts:</span>
+    <div class="w--full">
         <div class="text-sm">
-          {% for status in alerts %} {# Iterate over the grouped alerts object #}
-            <div class="flex">
-              <span class="font-bold mr-1">{{ status[0] }}:</span> {# status[0] is the key (status description) #}
-              <span>{{ status[1] | join: ',' }}</span> {# status[1] is the value (array of lines) #}
+          {% for status in alerts %}
+            <div class="flex flex--row">
+              <span class="font-bold mr-1">{{ status[0] }}:</span>
+              {% for line in status[1] %}
+              <span class="bg--gray-15 rounded--small px-16">
+                <span class="ml-4 text--white">{{ line }}</span>
+              </span>
+              {% endfor %}
             </div>
           {% endfor %}
         </div>
       </div>
     {% endif %}
 
-    <div class="flex items-center justify-between px-4 py-2 border-t border-black -mx-4 mt-4">
+    <div>
       <span class="font-bold text-lg">TfL & National Rail</span>
       <span class="text-sm text-gray-600">Updated {{ last_updated | date: "%H:%M" }}</span>
     </div>
-  </div>
 </div>

@@ -30,15 +30,27 @@ export default {
       }).format(now);
     };
 
+    // Helper to format epoch timestamps to UK local time (HH:MM)
+    const formatEpochToUKTime = (epochSeconds: number | undefined): string | undefined => {
+      if (epochSeconds === undefined || epochSeconds === null) return undefined;
+      const date = new Date(epochSeconds * 1000); // Convert seconds to milliseconds
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/London',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(date);
+    };
+
     try {
       // 1. Fetch data
       const tflClient = new TflClient(TFL_APP_KEY, TFL_STATION);
       const tflTrains = await tflClient.fetchTflArrivals();
       const alerts = await tflClient.fetchTflAlerts();
-
+      
       const nationalRailClient = new NationalRailClient(NR_TOKEN, NR_STATION, NR_DESTINATIONS);
       const railTrains = await nationalRailClient.fetchRailData();
-
+      
       // 2. Combine and sort
       const combinedTrains = [...tflTrains, ...railTrains].sort((a, b) => {
         // Sort directly by epoch timestamps. Use estimated if available, otherwise scheduled.
@@ -48,12 +60,19 @@ export default {
         return timeA - timeB;
       });
 
+      // 3. Add formatted times to each train object
+      const trainsWithFormattedTimes = combinedTrains.map(train => ({
+        ...train,
+        scheduled_formatted: formatEpochToUKTime(train.scheduled),
+        estimated_formatted: formatEpochToUKTime(train.estimated),
+      }));
+
       // 3. Prepare payload for TRMNL polling
       // Note: For TRMNL polling plugins, the returned JSON itself becomes the `data` variable.
       const payload = {
-        trains: combinedTrains,
+        trains: trainsWithFormattedTimes,
         alerts: alerts,
-        last_updated: Math.floor(new Date().getTime() / 1000) // Epoch timestamp in seconds
+        last_updated: getUKTime() // Formatted UK time string
       };
 
       return new Response(JSON.stringify(payload), {

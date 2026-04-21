@@ -1,4 +1,5 @@
 import { Train, Alert } from './types';
+import { formatEpochToUKTime } from './worker'; // Assuming formatEpochToUKTime is exported from worker.ts
 
 export class TflClient {
   private appKey: string;

@@ -1,4 +1,5 @@
 import { Train } from './types';
+import { formatEpochToUKTime } from './worker'; // Assuming formatEpochToUKTime is exported from worker.ts
 
 export class NationalRailClient {
   private token: string;
@@ -77,7 +78,9 @@ export class NationalRailClient {
             mode: 'Rail',
             dest: destName.replace('Highspeed', 'HS'),
             scheduled: scheduledEpoch ?? 0, // Fallback to 0 if parsing fails, already in seconds
+            scheduled_formatted: formatEpochToUKTime(scheduledEpoch),
             estimated: estimatedEpoch,
+            estimated_formatted: formatEpochToUKTime(estimatedEpoch),
             platform: platform,
             is_delayed: etd !== 'On time' && etd !== 'Cancelled',
             is_cancelled: etd === 'Cancelled'
