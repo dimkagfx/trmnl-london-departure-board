@@ -9,3 +9,11 @@ export const formatEpochToUKTime = (epochSeconds: number | undefined | null): st
     hour12: false,
   }).format(date);
 };
+
+// Helper to convert a string to Title Case (e.g., "CANNING TOWN" -> "Canning Town")
+export const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+};

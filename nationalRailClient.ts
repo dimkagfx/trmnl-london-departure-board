@@ -1,5 +1,5 @@
 import { Train } from './types'; // Assuming formatEpochToUKTime is exported from worker.ts
-import { formatEpochToUKTime } from './utils';
+import { formatEpochToUKTime, toTitleCase } from './utils';
 
 export class NationalRailClient {
   private token: string;
@@ -19,19 +19,44 @@ export class NationalRailClient {
    * @param timeStr The time string in "HH:MM" format.
    * @returns The epoch timestamp in milliseconds, or undefined if parsing fails.
    */
-  private getNextOccurrenceEpoch(timeStr: string): number | undefined {
+  private getNextOccurrenceEpoch(timeStr: string): number | undefined { // Returns epoch in seconds
     if (!timeStr || !timeStr.includes(':')) return undefined;
 
     try {
       const [targetH, targetM] = timeStr.split(':').map(Number);
-      const now = new Date();
-      const ukDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/London' }));
       
-      const targetDate = new Date(ukDate);
-      targetDate.setHours(targetH, targetM, 0, 0);
+      const nowUtc = new Date(); // Current UTC time
 
-      // If the target time is in the past (more than 5 minutes ago), assume it's for the next day.
-      if (targetDate.getTime() < ukDate.getTime() - (5 * 60 * 1000)) {
+      // Get current date components in London time
+      const londonDateParts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/London',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      }).formatToParts(nowUtc);
+
+      const londonYear = parseInt(londonDateParts.find(p => p.type === 'year')?.value || '0');
+      const londonMonth = parseInt(londonDateParts.find(p => p.type === 'month')?.value || '0') - 1; // Month is 0-indexed
+      const londonDay = parseInt(londonDateParts.find(p => p.type === 'day')?.value || '0');
+
+      // Create a Date object representing the target time (HH:MM) on the current London date,
+      // initially as a UTC date.
+      let targetDate = new Date(Date.UTC(londonYear, londonMonth, londonDay, targetH, targetM, 0, 0));
+
+      // Calculate the offset of 'Europe/London' from UTC *at this specific targetDate*.
+      // This is crucial for handling DST changes correctly.
+      const londonTimeAtTargetDate = new Date(targetDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+      const offsetMs = londonTimeAtTargetDate.getTime() - targetDate.getTime();
+
+      // Adjust the targetDate (which is currently UTC) by subtracting the offset
+      // to get the correct UTC epoch for the intended London local time.
+      targetDate = new Date(targetDate.getTime() - offsetMs);
+
+      // Get the current London time as a UTC epoch for comparison
+      const currentLondonTimeEpoch = nowUtc.getTime() + offsetMs;
+
+      // If the target time is in the past (more than 5 minutes ago) relative to current London time, assume it's for the next day.
+      if (targetDate.getTime() < currentLondonTimeEpoch - (5 * 60 * 1000)) {
         targetDate.setDate(targetDate.getDate() + 1);
       }
       return Math.floor(targetDate.getTime() / 1000); // Return epoch in seconds
@@ -75,8 +100,8 @@ export class NationalRailClient {
           const platform = s.platform || null;
 
           railList.push({
-            mode: 'Rail',
-            dest: destName.replace('Highspeed', 'HS'),
+            mode: 'Rail', // Use toTitleCase for destination names
+            dest: toTitleCase(destName.replace('Highspeed', 'HS')),
             scheduled: scheduledEpoch ?? 0, // Fallback to 0 if parsing fails, already in seconds
             scheduled_formatted: formatEpochToUKTime(scheduledEpoch),
             estimated: estimatedEpoch,
