@@ -1,5 +1,6 @@
 import { Train, Alert } from './types'; 
 import moment from 'moment-timezone';
+import { formatEpochToUKTime } from './utils';
 
 export class TflClient {
   private appKey: string;
@@ -63,6 +64,7 @@ export class TflClient {
             mode: t.lineName || 'TfL',
             dest: cleanDest,
             scheduled: scheduledEpoch,
+            scheduled_formatted: formatEpochToUKTime(scheduledEpoch),
             is_delayed: false,
             is_cancelled: false,
             platform: platform
