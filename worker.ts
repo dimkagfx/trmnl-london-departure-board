@@ -1,7 +1,8 @@
 import { TflClient } from './tflClient';
 import { NationalRailClient } from './nationalRailClient';
 import { Train, Alert } from './types';
-import { formatEpochToUKTime } from './utils';
+import moment from 'moment-timezone';
+
 
 export interface Env {
   // These should be set as "Secrets" or "Vars" in your Cloudflare Worker / wrangler.toml
@@ -12,24 +13,25 @@ export interface Env {
   NR_DESTINATIONS?: string;
 }
 
+/**
+ * Main entry point for the Cloudflare Worker.
+ * Fetches TFL and National Rail departure data, combines and sorts it,
+ * and returns a JSON payload for TRMNL polling.
+ * @param request The incoming request.
+ * @param env The environment variables.
+ * @param ctx The execution context.
+ * @returns A Promise that resolves to a Response object.
+ */
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    // Default config fallback if not provided in env variables
-    const TFL_APP_KEY = env.TFL_APP_KEY || 'a7fa36f15bb8432592a60e78c4847595';
-    const NR_TOKEN = env.NR_TOKEN || '089d8096-3bb0-4634-8b85-49bb636f5d7e';
-    const TFL_STATION = env.TFL_STATION || '940GZZDLSIT';
-    const NR_STATION = env.NR_STATION || 'SFA';
-    const NR_DESTINATIONS = env.NR_DESTINATIONS || 'St Pancras';
-
-    const getUKTime = () => {
-      const now = new Date();
-      return new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Europe/London',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      }).format(now);
-    };
+    // Destructure environment variables with default fallbacks
+    const {
+      TFL_APP_KEY = 'a7fa36f15bb8432592a60e78c4847595',
+      NR_TOKEN = '089d8096-3bb0-4634-8b85-49bb636f5d7e',
+      TFL_STATION = '940GZZDLSIT',
+      NR_STATION = 'SFA',
+      NR_DESTINATIONS = 'St Pancras',
+    } = env;
 
     try {
       // 1. Fetch data
@@ -42,26 +44,18 @@ export default {
       
       // 2. Combine and sort
       const combinedTrains = [...tflTrains, ...railTrains].sort((a, b) => {
-        // Sort directly by epoch timestamps. Use estimated if available, otherwise scheduled.
-        // If a timestamp is missing (e.g., undefined), treat it as a very large number to push it to the end.
-        const timeA = a.estimated ?? a.scheduled ?? Number.MAX_SAFE_INTEGER;
-        const timeB = b.estimated ?? b.scheduled ?? Number.MAX_SAFE_INTEGER;
+        // Sort by scheduled epoch timestamp. If a timestamp is missing (e.g., undefined), treat it as a very large number to push it to the end.
+        const timeA = a.scheduled ?? Number.MAX_SAFE_INTEGER;
+        const timeB = b.scheduled ?? Number.MAX_SAFE_INTEGER;
         return timeA - timeB;
       });
-
-      // 3. Add formatted times to each train object
-      const trainsWithFormattedTimes = combinedTrains.map(train => ({
-        ...train,
-        scheduled_formatted: formatEpochToUKTime(train.scheduled),
-        estimated_formatted: formatEpochToUKTime(train.estimated),
-      }));
 
       // 3. Prepare payload for TRMNL polling
       // Note: For TRMNL polling plugins, the returned JSON itself becomes the `data` variable.
       const payload = {
-        trains: trainsWithFormattedTimes,
+        trains: combinedTrains,
         alerts: alerts,
-        last_updated: getUKTime() // Formatted UK time string
+        last_updated: moment.tz('Europe/London').format('HH:mm') // Formatted UK time string
       };
 
       return new Response(JSON.stringify(payload), {

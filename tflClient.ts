@@ -1,24 +1,30 @@
-import { Train, Alert } from './types'; // Assuming formatEpochToUKTime is exported from worker.ts
-import { formatEpochToUKTime } from './utils';
+import { Train, Alert } from './types'; 
+import moment from 'moment-timezone';
 
 export class TflClient {
   private appKey: string;
   private station: string;
-  // Mapping for line abbreviations
-  private lineAbbreviations: { [key: string]: string } = {
-    'Bakerloo': 'BKL',
-    'Central': 'CEN',
-    'Circle': 'CIR',
-    'District': 'DIS',
+
+  /**
+   * Mapping for TFL line abbreviations.
+   * @private
+   * @static
+   * @readonly
+   */
+  private static readonly lineAbbreviations: { [key: string]: string } = {
+    Bakerloo: 'BKL',
+    Central: 'CEN',
+    Circle: 'CIR',
+    District: 'DIS',
     'Hammersmith & City': 'H&C',
-    'Jubilee': 'JBL',
-    'Metropolitan': 'MET',
-    'Northern': 'NOR',
-    'Piccadilly': 'PIC',
-    'Victoria': 'VIC',
+    Jubilee: 'JBL',
+    Metropolitan: 'MET',
+    Northern: 'NOR',
+    Piccadilly: 'PIC',
+    Victoria: 'VIC',
     'Waterloo & City': 'W&C',
-    'DLR': 'DLR',
-    'Overground': 'OVR',
+    DLR: 'DLR',
+    Overground: 'OVR',
     'Elizabeth line': 'ELZ',
   };
 
@@ -28,6 +34,10 @@ export class TflClient {
   }
 
   async fetchTflArrivals(): Promise<Train[]> {
+    /**
+     * Fetches TFL arrival data for the configured station.
+     * @returns A Promise that resolves to an array of Train objects.
+     */
     const arrivalsUrl = `https://api.tfl.gov.uk/StopPoint/${this.station}/Arrivals?app_key=${this.appKey}`;
     const trains: Train[] = [];
 
@@ -36,9 +46,8 @@ export class TflClient {
       if (arrivalsRes.ok) {
         const arrivalsData = await arrivalsRes.json() as any[];
         for (const t of arrivalsData) {
-          const expectedUtc = new Date(t.expectedArrival);
-          // Store epoch timestamp instead of formatted string
-          const scheduledEpoch = Math.floor(expectedUtc.getTime() / 1000); // Convert to seconds
+          // Use moment.utc() to parse the ISO 8601 string and get the Unix epoch in seconds
+          const scheduledEpoch = moment.utc(t.expectedArrival).unix();
 
           const rawDest = t.destinationName || 'Unknown';
           const cleanDest = rawDest
@@ -65,19 +74,23 @@ export class TflClient {
     return trains;
   }
 
+  /**
+   * Fetches TFL service alerts for Tube, DLR, Overground, and Elizabeth line.
+   * Groups alerts by status description.
+   * @returns A Promise that resolves to a Record mapping status descriptions to an array of abbreviated line names.
+   */
   async fetchTflAlerts(): Promise<Record<string, string[]>> {
     const statusUrl = `https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?app_key=${this.appKey}`;
     const groupedAlerts: Record<string, string[]> = {};
 
     const statusRes = await fetch(statusUrl, { cf: { cacheTtl: 300 } });
 
-      if (statusRes.ok) { // Check if the response was successful
-        const statusData = await statusRes.json() as any[];
-        for (const s of statusData) { // Iterate through each line status
-          // Severity < 10 indicates anything worse than "Good Service"
-          if (s.lineStatuses && s.lineStatuses[0].statusSeverity < 10) { // Check for actual status
-            const lineName = s.name;
-            const abbreviatedLine = this.lineAbbreviations[lineName] || lineName; // Get abbreviation or use full name
+    if (statusRes.ok) {
+      const statusData = (await statusRes.json()) as any[];
+      for (const s of statusData) {
+        if (s.lineStatuses && s.lineStatuses[0].statusSeverity < 10) {
+          const lineName = s.name;
+          const abbreviatedLine = TflClient.lineAbbreviations[lineName] || lineName;
             const statusDescription = s.lineStatuses[0].statusSeverityDescription;
             if (!groupedAlerts[statusDescription]) {
               groupedAlerts[statusDescription] = [];
